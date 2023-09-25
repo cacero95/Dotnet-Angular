@@ -16,7 +16,12 @@ namespace API.Controllers
         public async Task <ActionResult <UserDTO>> Register ( RegisterDTO registerDTO )
         {
             if ( await UserExist( registerDTO.Username ) ){
-                return BadRequest( "The User already exist" );
+                return BadRequest( 
+                    new {
+                        message = "The user already exists",
+                        code = 2
+                    } 
+                );
             }
             using var hmac = new HMACSHA512();
             var user = new AppUser
@@ -36,6 +41,7 @@ namespace API.Controllers
             if ( user == null || validateToken( user.PasswordSalt, user.PasswordHash, loginDTO.Password ) == false ) {
                 return Unauthorized();
             }
+            var testing = User.Claims;
             return OutUser( user );
         }
         private UserDTO OutUser( AppUser user ) {
