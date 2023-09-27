@@ -1,30 +1,36 @@
+using API.DTOS;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
-    [Authorize]
+    [ Authorize ]
     public class UsersController : BaseApiController
     {
-        private readonly DataContext _context;
-        private readonly ITokenService _tokenService;
+        private readonly IUserRepository _userRepository;
+        private readonly IMapper _mapper;
 
-        public UsersController( DataContext context, ITokenService tokenService )
+        public UsersController( IUserRepository userRepository, IMapper mapper )
         {
-            _context = context;
-            _tokenService = tokenService;
+            _mapper = mapper;
+            _userRepository = userRepository;
         }
-        [AllowAnonymous]
+        private MemberDTO GetMemberDTO( AppUser appuser ) {
+            return _mapper.Map<MemberDTO>( appuser );
+        }
         [HttpGet]
         public async Task <ActionResult<IEnumerable<AppUser>>> GetUsers() {
-            var user = HttpContext.User.Claims;
-            return await _context.Users.ToListAsync();
+            var users = await _userRepository.GetUsersAsync();
+            return Ok( _mapper.Map<IEnumerable<MemberDTO>>( users ) );
         }
+
         [HttpGet("{id}")]
-        public async Task <ActionResult<AppUser>> GetUserById( int id ) {
-            var user = await _context.Users.FindAsync( id );
-            var userClaim = HttpContext.User.Claims;
-            return user == null
-                ? NotFound() : user;
+        public async Task <ActionResult<MemberDTO>> GetUserById( int id ) {
+            return GetMemberDTO( await _userRepository.GetUserById( id ) );
+        }
+        [HttpGet("username/{username}")]
+        public async Task<ActionResult<MemberDTO>> GetuserByUserName( string username ) {
+            return GetMemberDTO( await _userRepository.GetUserByUsernameAsync( username ));
         }
     }
 }

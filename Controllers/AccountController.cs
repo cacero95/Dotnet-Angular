@@ -1,14 +1,18 @@
 using System.Security.Cryptography;
 using API.DTOS;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
+    [AllowAnonymous]
     public class AccountController : BaseApiController
     {
         private readonly DataContext _context;
         private readonly ITokenService _tokenService;
-        public AccountController ( DataContext context, ITokenService tokenService )
+        private readonly ICodeResponseService _codeResponseService;
+        public AccountController ( DataContext context, ITokenService tokenService, ICodeResponseService codeResponseService )
         {
+            _codeResponseService = codeResponseService;
             _tokenService = tokenService;
             _context = context;
         }
@@ -16,12 +20,7 @@ namespace API.Controllers
         public async Task <ActionResult <UserDTO>> Register ( RegisterDTO registerDTO )
         {
             if ( await UserExist( registerDTO.Username ) ){
-                return BadRequest( 
-                    new {
-                        message = "The user already exists",
-                        code = 2
-                    } 
-                );
+                return BadRequest( _codeResponseService.ResponseCode( 2 ));
             }
             using var hmac = new HMACSHA512();
             var user = new AppUser
@@ -39,9 +38,8 @@ namespace API.Controllers
         public async Task <ActionResult<UserDTO>> Login ( LoginDTO loginDTO ) { 
             var user = await _context.Users.SingleOrDefaultAsync( person => person.UserName == loginDTO.Username );
             if ( user == null || validateToken( user.PasswordSalt, user.PasswordHash, loginDTO.Password ) == false ) {
-                return Unauthorized();
+                return Unauthorized( _codeResponseService.ResponseCode( 3 ));
             }
-            var testing = User.Claims;
             return OutUser( user );
         }
         private UserDTO OutUser( AppUser user ) {
