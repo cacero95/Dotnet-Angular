@@ -1,3 +1,5 @@
+using API.DTOS;
+
 namespace API.Interfaces
 {
     public interface IUserRepository
@@ -7,5 +9,7 @@ namespace API.Interfaces
         Task<IEnumerable<AppUser>> GetUsersAsync();
         Task<AppUser> GetUserById( int id );
         Task<AppUser> GetUserByUsernameAsync( string username );
+        Task<IEnumerable<MemberDTO>> GetMembersAsync();
+        Task<MemberDTO> GetMember( string username );
     }
 }

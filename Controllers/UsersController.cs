@@ -9,19 +9,20 @@ namespace API.Controllers
     {
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly ICodeResponseService _codeResponseService;
 
-        public UsersController( IUserRepository userRepository, IMapper mapper )
+        public UsersController( IUserRepository userRepository, IMapper mapper, ICodeResponseService codeResponseService )
         {
             _mapper = mapper;
             _userRepository = userRepository;
+            _codeResponseService = codeResponseService;
         }
         private MemberDTO GetMemberDTO( AppUser appuser ) {
             return _mapper.Map<MemberDTO>( appuser );
         }
         [HttpGet]
-        public async Task <ActionResult<IEnumerable<AppUser>>> GetUsers() {
-            var users = await _userRepository.GetUsersAsync();
-            return Ok( _mapper.Map<IEnumerable<MemberDTO>>( users ) );
+        public async Task <ActionResult<IEnumerable<MemberDTO>>> GetUsers() {
+            return Ok( await _userRepository.GetMembersAsync() );
         }
 
         [HttpGet("{id}")]
@@ -30,7 +31,12 @@ namespace API.Controllers
         }
         [HttpGet("username/{username}")]
         public async Task<ActionResult<MemberDTO>> GetuserByUserName( string username ) {
-            return GetMemberDTO( await _userRepository.GetUserByUsernameAsync( username ));
+            // return GetMemberDTO( await _userRepository.GetUserByUsernameAsync( username ));
+            var user = await _userRepository.GetMember( username );
+            if ( user == null ) {
+                return NotFound( _codeResponseService.ResponseCode( 3 ));
+            }
+            return user;
         }
     }
 }
